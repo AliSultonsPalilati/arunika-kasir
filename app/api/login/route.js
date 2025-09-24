@@ -1,58 +1,50 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import prisma from "@/lib/prisma"; // pakai prisma client
 
-const prisma = new PrismaClient();
-
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    const { email, password } = await req.json();
 
-    // 1. Validasi input
     if (!email || !password) {
       return NextResponse.json(
-        { message: 'Email dan password wajib diisi.' },
-        { status: 400 } // Bad Request
+        { message: "Email dan password wajib diisi." },
+        { status: 400 }
       );
     }
 
-    // 2. Cari pengguna berdasarkan email
+    // cari user berdasarkan email
     const user = await prisma.user.findUnique({
-      where: { email: email },
+      where: { email },
     });
 
     if (!user) {
       return NextResponse.json(
-        { message: 'Email atau password salah.' },
-        { status: 401 } // Unauthorized
+        { message: "Email belum terdaftar." },
+        { status: 400 }
       );
     }
 
-    // 3. Bandingkan password yang dikirim dengan hash di database
-    const isPasswordValid = bcrypt.compareSync(password, user.password);
-
+    // cek password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return NextResponse.json(
-        { message: 'Email atau password salah.' },
-        { status: 401 } // Unauthorized
+        { message: "Password salah." },
+        { status: 400 }
       );
     }
 
-    // Jangan kirim kembali password hash di respons
-    const { password: _, ...userWithoutPassword } = user;
-
+    // login berhasil
     return NextResponse.json(
-      { message: 'Login berhasil!', user: userWithoutPassword },
-      { status: 200 } // OK
+      { message: "Login berhasil!", user: { id: user.id, name: user.name, email: user.email, role: user.role } },
+      { status: 200 }
     );
 
   } catch (error) {
-    console.error('Error saat login:', error);
+    console.error("Login error:", error);
     return NextResponse.json(
-      { message: 'Terjadi kesalahan pada server.' },
-      { status: 500 } // Internal Server Error
+      { message: "Terjadi kesalahan server." },
+      { status: 500 }
     );
   }
 }
-

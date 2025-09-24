@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import { LogIn, ArrowRight, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,10 +29,7 @@ export default function Login() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -40,10 +40,7 @@ export default function Login() {
         return;
       }
       
-      // Jika login berhasil
-      alert('Login berhasil! Anda akan diarahkan ke dashboard.');
-      window.location.href = '/dashboard'; // Arahkan ke dashboard
-
+      router.push('/dashboard');
     } catch (fetchError) {
       console.error('Gagal terhubung ke server:', fetchError);
       setError('Gagal terhubung ke server. Silakan coba lagi nanti.');
@@ -57,8 +54,8 @@ export default function Login() {
         <div className="bg-white rounded-xl shadow-lg p-8">
           
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center bg-blue-100 rounded-full p-3 mb-4">
-              <LogIn className="h-8 w-8 text-blue-600" />
+            <div className="inline-flex items-center justify-center bg-indigo-100 rounded-full p-3 mb-4">
+              <LogIn className="h-8 w-8 text-indigo-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-800">Selamat Datang Kembali</h1>
             <p className="text-gray-500 mt-1">Masuk untuk melanjutkan ke dashboard kasir.</p>
@@ -76,7 +73,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="contoh@email.com"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition"
               />
             </div>
 
@@ -91,7 +88,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition"
               />
             </div>
 
@@ -102,7 +99,7 @@ export default function Login() {
             <button 
               type="submit" 
               disabled={isLoading}
-              className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105 flex items-center justify-center gap-2 disabled:bg-blue-400 disabled:scale-100"
+              className="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105 flex items-center justify-center gap-2 disabled:bg-indigo-400 disabled:scale-100"
             >
               {isLoading ? (
                 <>
@@ -120,7 +117,7 @@ export default function Login() {
 
           <p className="text-center text-sm text-gray-600 mt-6">
             Belum punya akun?{' '}
-            <a href="/register" className="font-medium text-blue-600 hover:underline">
+            <a href="/register" className="font-medium text-indigo-600 hover:underline">
               Daftar di sini
             </a>
           </p>
@@ -129,4 +126,3 @@ export default function Login() {
     </main>
   );
 }
-

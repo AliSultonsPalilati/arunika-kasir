@@ -90,8 +90,6 @@ export default function Dashboard() {
       </main>
     );
   }
-
-  // Jika status bukan loading atau authenticated (misal. unauthenticated tapi sebelum redirect)
   return null;
 }
 

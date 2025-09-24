@@ -1,60 +1,48 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import prisma from "@/lib/prisma"; // pastikan file prisma client sudah ada
 
-const prisma = new PrismaClient();
-
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const body = await request.json();
-    const { fullName, email, password } = body;
+    const { name, email, password } = await req.json();
 
-    // 1. Validasi input dasar
-    if (!fullName || !email || !password) {
+    if (!name || !email || !password) {
       return NextResponse.json(
-        { message: 'Semua kolom wajib diisi.' },
-        { status: 400 } // Bad Request
+        { message: "Nama, email, dan password wajib diisi." },
+        { status: 400 }
       );
     }
 
-    // 2. Cek apakah email sudah terdaftar
+    // cek apakah email sudah ada
     const existingUser = await prisma.user.findUnique({
-      where: { email: email },
+      where: { email },
     });
-
     if (existingUser) {
       return NextResponse.json(
-        { message: 'Email sudah terdaftar.' },
-        { status: 409 } // Conflict
+        { message: "Email sudah terdaftar." },
+        { status: 400 }
       );
     }
 
-    // 3. Hash password sebelum disimpan
-    const hashedPassword = bcrypt.hashSync(password, 10); // 10 adalah salt rounds
+    // hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. Buat pengguna baru di database
-    const newUser = await prisma.user.create({
+    // simpan user baru ke DB
+    await prisma.user.create({
       data: {
-        fullName: fullName,
-        email: email,
+        name,
+        email,
         password: hashedPassword,
+        role: "CASHIER", // default role
       },
     });
 
-    // Jangan kirim kembali password hash di respons
-    const { password: _, ...userWithoutPassword } = newUser;
-
-    return NextResponse.json(
-      { message: 'Pendaftaran berhasil!', user: userWithoutPassword },
-      { status: 201 } // Created
-    );
-
+    return NextResponse.json({ message: "Registrasi berhasil!" }, { status: 201 });
   } catch (error) {
-    console.error('Error saat pendaftaran:', error);
+    console.error("Register error:", error);
     return NextResponse.json(
-      { message: 'Terjadi kesalahan pada server.' },
-      { status: 500 } // Internal Server Error
+      { message: "Terjadi kesalahan server." },
+      { status: 500 }
     );
   }
 }
-

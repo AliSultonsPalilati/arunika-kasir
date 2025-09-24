@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-import AuthProvider from "./AuthProvider"; // <-- Impor provider
+import AuthProvider from "./AuthProvider"; // <-- pastikan path benar
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -13,11 +13,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider> {/* <-- Bungkus children dengan provider */}
+        <AuthProvider>
           {children}
         </AuthProvider>
       </body>
     </html>
   );
 }
-

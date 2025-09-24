@@ -1,21 +1,64 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // bisa diganti mysql/sqlite sesuai kebutuhan
   url      = env("DATABASE_URL")
 }
 
-// Definisikan tabel 'User'
 model User {
-  id        String   @id @default(cuid())
-  fullName  String
+  id        Int      @id @default(autoincrement())
+  name      String
   email     String   @unique
-  password  String
+  password  String   // simpan hash, bukan plain text
+  role      Role     @default(CASHIER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Float
+  stock     Int
+  category  Category? @relation(fields: [categoryId], references: [id])
+  categoryId Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items TransactionItem[]
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String
+  products Product[]
+}
+
+model Transaction {
+  id        Int       @id @default(autoincrement())
+  cashier   User      @relation(fields: [cashierId], references: [id])
+  cashierId Int
+  total     Float
+  createdAt DateTime  @default(now())
+
+  items TransactionItem[]
+}
+
+model TransactionItem {
+  id            Int         @id @default(autoincrement())
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId Int
+  product       Product     @relation(fields: [productId], references: [id])
+  productId     Int
+  qty           Int
+  subtotal      Float
+}
+
+enum Role {
+  ADMIN
+  CASHIER
 }
