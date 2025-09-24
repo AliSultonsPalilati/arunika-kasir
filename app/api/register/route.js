@@ -1,34 +1,35 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import prisma from "@/lib/prisma"; // pastikan file prisma client sudah ada
+import prisma from "@/lib/prisma";
 
 export async function POST(req) {
   try {
     const { name, email, password } = await req.json();
 
+    // Validasi input
     if (!name || !email || !password) {
       return NextResponse.json(
-        { message: "Nama, email, dan password wajib diisi." },
+        { error: "Nama, email, dan password wajib diisi." },
         { status: 400 }
       );
     }
 
-    // cek apakah email sudah ada
+    // Cek apakah email sudah ada
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
     if (existingUser) {
       return NextResponse.json(
-        { message: "Email sudah terdaftar." },
+        { error: "Email sudah terdaftar." },
         { status: 400 }
       );
     }
 
-    // hash password
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // simpan user baru ke DB
-    await prisma.user.create({
+    // Simpan user baru
+    const user = await prisma.user.create({
       data: {
         name,
         email,
@@ -37,11 +38,17 @@ export async function POST(req) {
       },
     });
 
-    return NextResponse.json({ message: "Registrasi berhasil!" }, { status: 201 });
+    // Return tanpa password
+    const { password: _, ...userWithoutPassword } = user;
+
+    return NextResponse.json(
+      { message: "Registrasi berhasil!", user: userWithoutPassword },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Register error:", error);
     return NextResponse.json(
-      { message: "Terjadi kesalahan server." },
+      { error: "Terjadi kesalahan server." },
       { status: 500 }
     );
   }
