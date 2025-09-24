@@ -1,24 +1,55 @@
 'use client';
 
 import { useState } from 'react';
-import { UserPlus, ArrowRight, Loader2 } from 'lucide-react';
+import { UserPlus, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function Register() {
-  const [name, setName] = useState(''); // Tambah state name
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: ''
+  });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (error) setError('');
+  };
+
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      setError('Nama lengkap wajib diisi');
+      return false;
+    }
+    if (!formData.email.trim()) {
+      setError('Email wajib diisi');
+      return false;
+    }
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      setError('Format email tidak valid');
+      return false;
+    }
+    if (formData.password.length < 6) {
+      setError('Password minimal 6 karakter');
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!name || !email || !password) { // Validasi name juga
-      setError('Nama, email, dan password wajib diisi.');
-      return;
-    }
+    
+    if (!validateForm()) return;
 
     setIsLoading(true);
     setError('');
@@ -27,106 +58,135 @@ export default function Register() {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }), // Kirim name ke backend
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || 'Gagal registrasi.');
-        setIsLoading(false);
+        setError(data.message || 'Gagal registrasi');
         return;
       }
 
-      alert('Registrasi berhasil! Silakan login.');
-      router.push('/login');
+      // Success notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = 'Registrasi berhasil! Mengarahkan ke halaman login...';
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        document.body.removeChild(notification);
+        router.push('/login');
+      }, 2000);
+
     } catch (err) {
-      setError('Gagal terhubung ke server.');
+      setError('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl shadow-lg p-8">
+    <main className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md animate-fade-in">
+        <div className="bg-white rounded-2xl shadow-xl p-8 border-0">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center bg-green-100 rounded-full p-3 mb-4">
-              <UserPlus className="h-8 w-8 text-green-600" />
+            <div className="inline-flex items-center justify-center bg-emerald-100 rounded-full p-4 mb-4">
+              <UserPlus className="h-8 w-8 text-emerald-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">Buat Akun Baru</h1>
-            <p className="text-gray-500 mt-1">Daftar untuk menggunakan kasir Arunika.</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Buat Akun Baru</h1>
+            <p className="text-gray-600">Bergabung dengan Arunika Kasir</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
                 Nama Lengkap
               </label>
               <input
                 type="text"
                 id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nama Anda"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Masukkan nama lengkap"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                disabled={isLoading}
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
                 Email
               </label>
               <input
                 type="email"
                 id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
                 placeholder="contoh@email.com"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                disabled={isLoading}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
                 Password
               </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Minimal 6 karakter"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
-            {error && <p className="text-sm text-red-600 bg-red-100 p-2 rounded-lg">{error}</p>}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                {error}
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 disabled:bg-green-400"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors duration-200"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="animate-spin" size={18} /> Mendaftar...
+                  <Loader2 className="animate-spin" size={20} />
+                  Mendaftarkan...
                 </>
               ) : (
                 <>
-                  Daftar
-                  <ArrowRight size={18} />
+                  Daftar Sekarang
+                  <ArrowRight size={20} />
                 </>
               )}
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-600 mt-6">
+          <div className="text-center text-sm text-gray-600 mt-6">
             Sudah punya akun?{' '}
-            <a href="/login" className="font-medium text-green-600 hover:underline">
+            <a href="/login" className="font-semibold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors">
               Masuk di sini
             </a>
-          </p>
+          </div>
         </div>
       </div>
     </main>

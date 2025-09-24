@@ -1,55 +1,67 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import prisma from "@/lib/prisma";
+import bcryptjs from 'bcryptjs';
+import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-export async function POST(req) {
+const prisma = new PrismaClient();
+
+export async function POST(request) {
   try {
-    const { name, email, password } = await req.json();
+    const { name, email, password } = await request.json();
 
     // Validasi input
     if (!name || !email || !password) {
       return NextResponse.json(
-        { error: "Nama, email, dan password wajib diisi." },
+        { message: 'Nama, email, dan password wajib diisi' },
         { status: 400 }
       );
     }
 
-    // Cek apakah email sudah ada
+    if (password.length < 6) {
+      return NextResponse.json(
+        { message: 'Password minimal 6 karakter' },
+        { status: 400 }
+      );
+    }
+
+    // Cek apakah email sudah terdaftar
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email }
     });
+
     if (existingUser) {
       return NextResponse.json(
-        { error: "Email sudah terdaftar." },
+        { message: 'Email sudah terdaftar' },
         { status: 400 }
       );
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcryptjs.hash(password, 12);
 
-    // Simpan user baru
+    // Buat user baru
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: "CASHIER", // default role
-      },
+      }
     });
 
-    // Return tanpa password
-    const { password: _, ...userWithoutPassword } = user;
-
     return NextResponse.json(
-      { message: "Registrasi berhasil!", user: userWithoutPassword },
+      { 
+        message: 'Registrasi berhasil',
+        user: { id: user.id, name: user.name, email: user.email }
+      },
       { status: 201 }
     );
+
   } catch (error) {
-    console.error("Register error:", error);
+    console.error('Register error:', error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan server." },
+      { message: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
