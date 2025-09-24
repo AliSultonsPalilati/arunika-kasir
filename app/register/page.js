@@ -5,6 +5,7 @@ import { UserPlus, ArrowRight, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function Register() {
+  const [name, setName] = useState(''); // Tambah state name
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,8 +15,8 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      setError('Email dan password wajib diisi.');
+    if (!name || !email || !password) { // Validasi name juga
+      setError('Nama, email, dan password wajib diisi.');
       return;
     }
 
@@ -26,7 +27,7 @@ export default function Register() {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }), // Kirim name ke backend
       });
 
       const data = await res.json();
@@ -58,6 +59,20 @@ export default function Register() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                Nama Lengkap
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Nama Anda"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              />
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email

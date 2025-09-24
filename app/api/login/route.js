@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import prisma from "@/lib/prisma"; // pakai prisma client
+import prisma from "@/lib/prisma";
+import { sign } from "jsonwebtoken";
 
 export async function POST(req) {
   try {
@@ -34,12 +35,27 @@ export async function POST(req) {
       );
     }
 
-    // login berhasil
-    return NextResponse.json(
-      { message: "Login berhasil!", user: { id: user.id, name: user.name, email: user.email, role: user.role } },
-      { status: 200 }
+    // generate JWT token
+    const token = sign(
+      {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET || "secret", // pastikan JWT_SECRET di .env
+      { expiresIn: "1d" }
     );
 
+    // login berhasil, kirim token
+    return NextResponse.json(
+      {
+        message: "Login berhasil!",
+        user: { id: user.id, name: user.name, email: user.email, role: user.role },
+        token,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(

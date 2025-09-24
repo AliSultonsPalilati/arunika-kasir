@@ -10,8 +10,8 @@ export default function SplashPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-      router.push("/register"); // Redirect ke halaman daftar
-    }, 3000); // 3 detik
+      router.push("/register"); 
+    }, 2000); 
 
     return () => clearTimeout(timer);
   }, [router]);

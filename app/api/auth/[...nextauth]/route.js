@@ -16,16 +16,12 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Cari user
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
         if (!user) return null;
-
-        // Cek password
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) return null;
-
         return {
           id: user.id,
           name: user.name,
@@ -36,13 +32,22 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token, user }) {
+    async jwt({ token, user }) {
       if (user) {
+        token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.role = user.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token) {
         session.user = {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
+          id: token.id,
+          name: token.name,
+          email: token.email,
+          role: token.role,
         };
       }
       return session;
